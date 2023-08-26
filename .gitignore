@@ -1,3 +1,5 @@
-#Ignorar
+#Ignore
 Debug
 .settings
+.cproject
+.project
