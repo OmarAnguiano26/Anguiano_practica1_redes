@@ -34,5 +34,6 @@
 #define LWIP_TCPECHO_H
 
 void tcpecho_init(void);
+void tcpecho_CRC32();
 
 #endif /* LWIP_TCPECHO_H */

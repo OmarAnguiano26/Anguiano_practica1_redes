@@ -258,10 +258,6 @@ int main(void)
     {
         LWIP_ASSERT("main(): Task creation failed.", 0);
     }
-    if( (sys_thread_new("aescrc_task", aescrc_test_task, NULL, 1024, 4)) == NULL )
-    {
-    	LWIP_ASSERT("main(): Task creation failed.", 0);
-    }
 
     vTaskStartScheduler();
 
