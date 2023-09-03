@@ -63,6 +63,7 @@ tcpecho_thread(void *arg)
   uint32_t crc_result;
   AES_struct_data decrypt_data;
   uint8_t crc_str[] = {};
+  void * data_send;
 
   /**Inits CRC and AES*/
   EIL_InitCrc32();
@@ -101,6 +102,11 @@ tcpecho_thread(void *arg)
              netbuf_data(buf, &data, &len);
              /**Encrypts data*/
              data_encrypt = EIL_Encrypt(ctx, data);
+             /**CRC*/
+             crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
+             /**Conver crc to str*/
+             sprintf(crc_str, "%d", crc_result);
+             strcat(data_encrypt.padded_data, crc_str);
              err = netconn_write(newconn, data_encrypt.padded_data, data_encrypt.pad_len, NETCONN_COPY);
 #if 0
             if (err != ERR_OK) {
