@@ -150,7 +150,7 @@ static void InitCrc32(CRC_Type *base, uint32_t seed)
 void aescrc_test_task(void *arg)
 {
 
-	uint8_t test_string[] = {"01234567890123456789"};
+	uint8_t test_string[] = {"012345678901234"};
 	/* AES data */
 	uint8_t key[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
 	uint8_t iv[]  = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -170,14 +170,16 @@ void aescrc_test_task(void *arg)
 
 	/* To encrypt an array its lenght must be a multiple of 16 so we add zeros */
 	test_string_len = strlen(test_string);
+	PRINTF("String length: %d\n", test_string_len);
 	padded_len = test_string_len + (16 - (test_string_len%16) );
 	memcpy(padded_msg, test_string, test_string_len);
+	PRINTF("String length padded: %d\n", padded_len);
 
 	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
 
 	PRINTF("Encrypted Message: ");
 	for(int i=0; i<padded_len; i++) {
-		PRINTF("0x%02x,", padded_msg[i]);
+		PRINTF("%d-0x%02x,", i,padded_msg[i]);
 	}
 	PRINTF("\r\n");
 
@@ -234,9 +236,8 @@ static void stack_init(void *arg)
 
     tcpecho_init();
 
-    sys_thread_new("aescrc_task", aescrc_test_task, NULL, 1024, 4);
 
-    vTaskDelete(NULL);
+    //vTaskDelete(NULL);
 }
 
 /*!
@@ -250,11 +251,16 @@ int main(void)
     BOARD_InitDebugConsole();
     /* Disable SYSMPU. */
     base->CESR &= ~SYSMPU_CESR_VLD_MASK;
+    PRINTF("Test Terminal");
 
     /* Initialize lwIP from thread */
     if (sys_thread_new("main", stack_init, NULL, INIT_THREAD_STACKSIZE, INIT_THREAD_PRIO) == NULL)
     {
         LWIP_ASSERT("main(): Task creation failed.", 0);
+    }
+    if( (sys_thread_new("aescrc_task", aescrc_test_task, NULL, 1024, 4)) == NULL )
+    {
+    	LWIP_ASSERT("main(): Task creation failed.", 0);
     }
 
     vTaskStartScheduler();
