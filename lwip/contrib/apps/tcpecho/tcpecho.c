@@ -37,6 +37,20 @@
 
 #include "lwip/sys.h"
 #include "lwip/api.h"
+#include "EIL.h"
+#include "aes.h"
+#include <stdio.h>
+
+/* Server IP address*/
+#define configSERVER_ADDR0 192
+#define configSERVER_ADDR1 168
+#define configSERVER_ADDR2 0
+#define configSERVER_ADDR3 100
+/*-----------------------------------------------------------------------------------*/
+
+/**Buffer to convert received data to char*/
+static char tcpecho_app_data_print[256] = {0};
+static ip4_addr_t server_ip_address;
 /*-----------------------------------------------------------------------------------*/
 static void
 tcpecho_thread(void *arg)
@@ -44,6 +58,16 @@ tcpecho_thread(void *arg)
   struct netconn *conn, *newconn;
   err_t err;
   LWIP_UNUSED_ARG(arg);
+  struct AES_ctx ctx;
+  AES_struct_data data_encrypt;
+  uint32_t crc_result;
+  AES_struct_data decrypt_data;
+  uint8_t crc_str[] = {};
+
+  /**Inits CRC and AES*/
+  EIL_InitCrc32();
+  ctx = EIL_AES_Init();
+
 
   /* Create a new connection identifier. */
   /* Bind connection to well known port number 7. */
@@ -69,17 +93,21 @@ tcpecho_thread(void *arg)
       struct netbuf *buf;
       void *data;
       u16_t len;
+      uint8_t i = 0;
 
       while ((err = netconn_recv(newconn, &buf)) == ERR_OK) {
         /*printf("Recved\n");*/
         do {
              netbuf_data(buf, &data, &len);
-             err = netconn_write(newconn, data, len, NETCONN_COPY);
+             /**Encrypts data*/
+             data_encrypt = EIL_Encrypt(ctx, data);
+             err = netconn_write(newconn, data_encrypt.padded_data, data_encrypt.pad_len, NETCONN_COPY);
 #if 0
             if (err != ERR_OK) {
               printf("tcpecho: netconn_write: error \"%s\"\n", lwip_strerr(err));
             }
 #endif
+            i++;
         } while (netbuf_next(buf) >= 0);
         netbuf_delete(buf);
       }
@@ -90,6 +118,65 @@ tcpecho_thread(void *arg)
     }
   }
 }
+
+static void
+tcpecho_thread_client(void *arg)
+{
+
+	  struct netconn *conn, *newconn;
+	  err_t err,com_err;
+	  LWIP_UNUSED_ARG(arg);
+
+	  while(1)
+	  {
+		  conn = netconn_new(NETCONN_TCP);
+		  /**Connect to server*/
+		  IP4_ADDR(&server_ip_address, configSERVER_ADDR0, configSERVER_ADDR1, configSERVER_ADDR2, configSERVER_ADDR3);
+		  /**Delay to connect the server*/
+		  PRINTF("Start Server\n");
+		  vTaskDelay(5000);
+		  err = netconn_connect(conn, &server_ip_address,7);
+		  /**Successfully connected to server*/
+		  if(err == ERR_OK)
+		  {
+			  /**Start writing*/
+			  struct netbuf *buf;
+			  void *data;
+			  u16_t len;
+
+			  data = (void*)"Hello Server";
+			  len = strlen((const char*)data);
+			  com_err = netconn_write(conn, data, len, NETCONN_COPY);
+			  if (com_err != ERR_OK)
+			  {
+				  PRINTF("tcp_app: Error in write \n");
+			  }
+			  /**Start receiving from server*/
+			  com_err = netconn_recv(conn, &buf);
+			  if(com_err == ERR_OK)
+			  {
+				  PRINTF("Received from Server:");
+				  do
+				  {
+					  netbuf_data(buf, &data, &len);
+					  /**Copy received data to a string so it can be printed on console*/
+					  memcpy(tcpecho_app_data_print, data, len);
+					  PRINTF("%s\r\n", tcpecho_app_data_print);
+				  }
+				  while(netbuf_next(buf) >= 0);
+				  netbuf_delete(buf);
+			  }
+			  else
+			  {
+				  PRINTF("Error in receivig\n");
+			  }
+			  netconn_delete(conn);
+			  PRINTF("Connection closed\n");
+
+		  }
+	}
+}
+
 /*-----------------------------------------------------------------------------------*/
 void
 tcpecho_init(void)

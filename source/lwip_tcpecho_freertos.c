@@ -181,8 +181,6 @@ void aescrc_test_task(void *arg)
 	sprintf(crc_str, "%d", crc_result);
 	PRINTF("CRC string:: %s\r\n", &crc_str[2]);
 
-
-	vTaskDelay(5000);
 }
 
 /*!
@@ -227,8 +225,7 @@ static void stack_init(void *arg)
 
     tcpecho_init();
 
-
-    //vTaskDelete(NULL);
+    vTaskDelete(NULL);
 }
 
 /*!
@@ -248,10 +245,7 @@ int main(void)
     {
         LWIP_ASSERT("main(): Task creation failed.", 0);
     }
-    if( (sys_thread_new("aescrc_task", aescrc_test_task, NULL, 1024, 4)) == NULL )
-    {
-    	LWIP_ASSERT("main(): Task creation failed.", 0);
-    }
+
     vTaskStartScheduler();
 
     /* Will not get here unless a task calls vTaskEndScheduler ()*/
