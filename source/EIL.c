@@ -7,6 +7,10 @@
 
 #include <aes.h>
 #include "fsl_crc.h"
+#include "EIL.h"
+#include "pin_mux.h"
+#include "clock_config.h"
+#include "board.h"
 
 
 /*!
@@ -40,7 +44,7 @@ uint32_t EIL_CRC32(uint8_t *data, uint8_t len)
     CRC_WriteData(base, (uint8_t *)&data[0], len);
     checksum32 = CRC_Get32bitResult(base);
 
-    PRINTF("CRC-32: 0x%08x\r\n", checksum32);
+    //PRINTF("CRC-32: 0x%08x\r\n", checksum32);
 
     return checksum32;
 }
@@ -57,10 +61,11 @@ struct AES_ctx EIL_AES_Init()
 	return ctx;
 }
 
-uint8_t * EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
+AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 {
 	size_t string_len, padded_len;
 	uint8_t padded_msg[512] = {0};
+	AES_struct_data AES_data;
 
 	/* To encrypt an array its lenght must be a multiple of 16 so we add zeros */
 	string_len = strlen(data);
@@ -70,6 +75,16 @@ uint8_t * EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 	PRINTF("String length padded: %d\r\n", padded_len);
 
 	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
+	memcpy(AES_data.padded_data,padded_msg,padded_len);
+	AES_data.len = string_len;
+	AES_data.pad_len = padded_len;
 
-	return padded_msg;
+	return AES_data;
+}
+
+AES_struct_data EIL_Decrypt(struct AES_ctx ctx,AES_struct_data Encrypted_msg)
+{
+	AES_CBC_decrypt_buffer(&ctx, Encrypted_msg.padded_data, Encrypted_msg.pad_len);
+	return Encrypted_msg;
+
 }

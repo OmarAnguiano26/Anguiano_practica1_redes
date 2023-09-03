@@ -8,9 +8,17 @@
 #ifndef EIL_H_
 #define EIL_H_
 
+typedef struct
+{
+	uint8_t padded_data[512];
+	uint32_t len;
+	uint32_t pad_len;
+}AES_struct_data;
+
 static void EIL_InitCrc32();
 uint32_t EIL_CRC32(uint8_t *data, uint8_t len);
-AES_ctx EIL_AES_Init();
-uint8_t * EIL_Encrypt(AES_ctx ctx, uint8_t *data);
+struct AES_ctx EIL_AES_Init();
+AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data);
+
 
 #endif /* EIL_H_ */
