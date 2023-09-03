@@ -20,7 +20,7 @@
  *          name="CRC-32"
  *          http://reveng.sourceforge.net/crc-catalogue/
  */
-static void EIL_InitCrc32()
+void EIL_InitCrc32()
 {
     crc_config_t config;
     CRC_Type *base = CRC0;
@@ -56,7 +56,6 @@ struct AES_ctx EIL_AES_Init()
 	uint8_t iv[]  = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, key, iv);
-	PRINTF("AES Init\r\n");
 
 	return ctx;
 }
@@ -69,10 +68,10 @@ AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 
 	/* To encrypt an array its lenght must be a multiple of 16 so we add zeros */
 	string_len = strlen(data);
-	PRINTF("String length: %d\r\n", string_len);
+	//PRINTF("String length: %d\r\n", string_len);
 	padded_len = string_len + (16 - (string_len%16) );
 	memcpy(padded_msg, data, string_len);
-	PRINTF("String length padded: %d\r\n", padded_len);
+	//PRINTF("String length padded: %d\r\n", padded_len);
 
 	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
 	memcpy(AES_data.padded_data,padded_msg,padded_len);

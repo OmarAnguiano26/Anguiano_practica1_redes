@@ -31,6 +31,7 @@
 
 #include "aes.h"
 #include "fsl_crc.h"
+#include "EIL.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -149,49 +150,24 @@ static void InitCrc32(CRC_Type *base, uint32_t seed)
 
 void aescrc_test_task(void *arg)
 {
+	struct AES_ctx ctx;
+	AES_struct_data data;
+	uint32_t crc_result;
 
 	uint8_t test_string[] = {"012345678901234"};
-	/* AES data */
-	uint8_t key[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
-	uint8_t iv[]  = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	struct AES_ctx ctx;
-	size_t test_string_len, padded_len;
-	uint8_t padded_msg[512] = {0};
-	/* CRC data */
-	CRC_Type *base = CRC0;
-	uint32_t checksum32;
-
-
-	PRINTF("AES and CRC test task\r\n");
-
-	PRINTF("\nTesting AES128\r\n\n");
-	/* Init the AES context structure */
-	AES_init_ctx_iv(&ctx, key, iv);
-
-	/* To encrypt an array its lenght must be a multiple of 16 so we add zeros */
-	test_string_len = strlen(test_string);
-	PRINTF("String length: %d\n", test_string_len);
-	padded_len = test_string_len + (16 - (test_string_len%16) );
-	memcpy(padded_msg, test_string, test_string_len);
-	PRINTF("String length padded: %d\n", padded_len);
-
-	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
-
+	EIL_InitCrc32();
+	ctx = EIL_AES_Init();
+	/*Encrypt*/
+	data = EIL_Encrypt(ctx, test_string);
 	PRINTF("Encrypted Message: ");
-	for(int i=0; i<padded_len; i++) {
-		PRINTF("%d-0x%02x,", i,padded_msg[i]);
+	for(int i=0; i<data.pad_len; i++)
+	{
+		PRINTF("%d-0x%02x,", i, data.padded_data[i]);
 	}
-	PRINTF("\r\n");
+	crc_result = EIL_CRC32(data.padded_data, data.pad_len);
+	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
 
-
-	PRINTF("\nTesting CRC32\r\n\n");
-
-    InitCrc32(base, 0xFFFFFFFFU);
-    CRC_WriteData(base, (uint8_t *)&padded_msg[0], padded_len);
-    checksum32 = CRC_Get32bitResult(base);
-
-    PRINTF("CRC-32: 0x%08x\r\n", checksum32);
-
+	vTaskDelay(5000);
 }
 
 /*!
@@ -258,7 +234,10 @@ int main(void)
     {
         LWIP_ASSERT("main(): Task creation failed.", 0);
     }
-
+    if( (sys_thread_new("aescrc_task", aescrc_test_task, NULL, 1024, 4)) == NULL )
+    {
+    	LWIP_ASSERT("main(): Task creation failed.", 0);
+    }
     vTaskStartScheduler();
 
     /* Will not get here unless a task calls vTaskEndScheduler ()*/
