@@ -32,6 +32,7 @@
 #include "aes.h"
 #include "fsl_crc.h"
 #include "EIL.h"
+#include <stdio.h>
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -154,6 +155,7 @@ void aescrc_test_task(void *arg)
 	AES_struct_data data;
 	uint32_t crc_result;
 	AES_struct_data decrypt_data;
+	uint8_t crc_str[] = {};
 
 	uint8_t test_string[] = {"Hello World"};
 	EIL_InitCrc32();
@@ -173,6 +175,12 @@ void aescrc_test_task(void *arg)
 	PRINTF("Decrypted Message: %s\r\n", decrypt_data.padded_data);
 	crc_result = EIL_CRC32(decrypt_data.padded_data, decrypt_data.pad_len);
 	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
+	PRINTF("\r\nCRC-32 decimal: %d\r\n",crc_result);
+
+	/**Conver crc to str*/
+	sprintf(crc_str, "%d", crc_result);
+	PRINTF("CRC string:: %s\r\n", &crc_str[2]);
+
 
 	vTaskDelay(5000);
 }
