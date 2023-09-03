@@ -153,8 +153,9 @@ void aescrc_test_task(void *arg)
 	struct AES_ctx ctx;
 	AES_struct_data data;
 	uint32_t crc_result;
+	AES_struct_data decrypt_data;
 
-	uint8_t test_string[] = {"012345678901234"};
+	uint8_t test_string[] = {"Hello World"};
 	EIL_InitCrc32();
 	ctx = EIL_AES_Init();
 	/*Encrypt*/
@@ -165,6 +166,12 @@ void aescrc_test_task(void *arg)
 		PRINTF("%d-0x%02x,", i, data.padded_data[i]);
 	}
 	crc_result = EIL_CRC32(data.padded_data, data.pad_len);
+	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
+
+	/**Test decrypt*/
+	decrypt_data =  EIL_Decrypt(ctx, data);
+	PRINTF("Decrypted Message: %s\r\n", decrypt_data.padded_data);
+	crc_result = EIL_CRC32(decrypt_data.padded_data, decrypt_data.pad_len);
 	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
 
 	vTaskDelay(5000);
@@ -227,7 +234,6 @@ int main(void)
     BOARD_InitDebugConsole();
     /* Disable SYSMPU. */
     base->CESR &= ~SYSMPU_CESR_VLD_MASK;
-    PRINTF("Test Terminal");
 
     /* Initialize lwIP from thread */
     if (sys_thread_new("main", stack_init, NULL, INIT_THREAD_STACKSIZE, INIT_THREAD_PRIO) == NULL)

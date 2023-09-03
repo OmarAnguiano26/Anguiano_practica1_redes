@@ -85,5 +85,4 @@ AES_struct_data EIL_Decrypt(struct AES_ctx ctx,AES_struct_data Encrypted_msg)
 {
 	AES_CBC_decrypt_buffer(&ctx, Encrypted_msg.padded_data, Encrypted_msg.pad_len);
 	return Encrypted_msg;
-
 }
