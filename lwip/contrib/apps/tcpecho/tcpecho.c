@@ -106,7 +106,6 @@ tcpecho_thread(void *arg)
              crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
              /**Conver crc to str*/
              sprintf(crc_str, "%d", crc_result);
-             strcat(data_encrypt.padded_data, crc_str);
              err = netconn_write(newconn, data_encrypt.padded_data, data_encrypt.pad_len, NETCONN_COPY);
 #if 0
             if (err != ERR_OK) {
