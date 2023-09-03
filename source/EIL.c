@@ -5,12 +5,9 @@
  *      Author: Omar_PC
  */
 
-#include "pin_mux.h"
-#include "clock_config.h"
-#include "board.h"
-
+#include <aes.h>
 #include "fsl_crc.h"
-#include "aes.h"
+
 
 /*!
  * @brief Init for CRC-32.
@@ -48,7 +45,7 @@ uint32_t EIL_CRC32(uint8_t *data, uint8_t len)
     return checksum32;
 }
 
-AES_ctx EIL_AES_Init()
+struct AES_ctx EIL_AES_Init()
 {
 	/* AES data */
 	uint8_t key[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
@@ -60,7 +57,7 @@ AES_ctx EIL_AES_Init()
 	return ctx;
 }
 
-uint8_t * EIL_Encrypt(AES_ctx ctx, uint8_t *data)
+uint8_t * EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 {
 	size_t string_len, padded_len;
 	uint8_t padded_msg[512] = {0};
