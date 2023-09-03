@@ -147,7 +147,7 @@ static void InitCrc32(CRC_Type *base, uint32_t seed)
 
     CRC_Init(base, &config);
 }
-
+/**Test task for functions*/
 void aescrc_test_task(void *arg)
 {
 	struct AES_ctx ctx;
