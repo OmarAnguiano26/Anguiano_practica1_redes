@@ -162,11 +162,7 @@ void aescrc_test_task(void *arg)
 	ctx = EIL_AES_Init();
 	/*Encrypt*/
 	data = EIL_Encrypt(ctx, test_string);
-	PRINTF("Encrypted Message: ");
-	for(int i=0; i<data.pad_len; i++)
-	{
-		PRINTF("%d-0x%02x,", i, data.padded_data[i]);
-	}
+
 	crc_result = EIL_CRC32(data.padded_data, data.pad_len);
 	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
 

@@ -72,7 +72,8 @@ AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 
 	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
 	/**Copies encrypted data and size to the EIL struct*/
-	memcpy(AES_data.padded_data,padded_msg,padded_len);
+	AES_data.padded_data = padded_msg;
+	//memcpy(AES_data.padded_data,padded_msg,padded_len);
 	AES_data.len = string_len;
 	AES_data.pad_len = padded_len;
 

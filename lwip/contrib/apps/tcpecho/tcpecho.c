@@ -49,7 +49,7 @@
 /*-----------------------------------------------------------------------------------*/
 
 /**Buffer to convert received data to char*/
-static char tcpecho_app_data_print[256] = {0};
+static char tcpecho_app_data_print[512] = {0};
 static ip4_addr_t server_ip_address;
 /*-----------------------------------------------------------------------------------*/
 static void
@@ -62,7 +62,7 @@ tcpecho_thread(void *arg)
   AES_struct_data data_encrypt;
   uint32_t crc_result;
   AES_struct_data decrypt_data;
-  uint8_t crc_str[] = {};
+  uint8_t crc_str[9];
   void * data_send;
 
   /**Inits CRC and AES*/
@@ -94,25 +94,33 @@ tcpecho_thread(void *arg)
       struct netbuf *buf;
       void *data;
       u16_t len;
-      uint8_t i = 0;
+      uint16_t size1,size2;
 
       while ((err = netconn_recv(newconn, &buf)) == ERR_OK) {
         /*printf("Recved\n");*/
         do {
              netbuf_data(buf, &data, &len);
              /**Encrypts data*/
-             data_encrypt = EIL_Encrypt(ctx, data);
+             memcpy(tcpecho_app_data_print, data, len);
+             tcpecho_app_data_print[len] = 0;
+             PRINTF("Data before encrypt: %s1\r\n",tcpecho_app_data_print);
+             data_encrypt = EIL_Encrypt(ctx, tcpecho_app_data_print);
+             tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
+             PRINTF("Data after encrypt: %s1\r\n",data_encrypt.padded_data);
+             PRINTF("Data after encrypt: %s 2\r\n",tcpecho_app_data_print);
+
              /**CRC*/
              crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
              /**Conver crc to str*/
              sprintf(crc_str, "%d", crc_result);
-             err = netconn_write(newconn, data_encrypt.padded_data, data_encrypt.pad_len, NETCONN_COPY);
+
+
+             err = netconn_write(newconn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
 #if 0
             if (err != ERR_OK) {
               printf("tcpecho: netconn_write: error \"%s\"\n", lwip_strerr(err));
             }
 #endif
-            i++;
         } while (netbuf_next(buf) >= 0);
         netbuf_delete(buf);
       }
