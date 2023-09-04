@@ -10,7 +10,7 @@
 
 typedef struct
 {
-	uint8_t padded_data[256]; /**Data to encrypt*/
+	uint8_t padded_data[512]; /**Data to encrypt*/
 	uint32_t len; /**length of the original data BEFORE padding*/
 	uint32_t pad_len; /**length of data AFTER padding*/
 	/**TODO Length diff will be used to eliminate padding*/
@@ -53,6 +53,11 @@ AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data);
  * return: Returns a structure with the desencrypted data and length
  * */
 AES_struct_data EIL_Decrypt(struct AES_ctx ctx,AES_struct_data Encrypted_msg);
+
+err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff);
+
+err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff);
+
 
 
 #endif /* EIL_H_ */

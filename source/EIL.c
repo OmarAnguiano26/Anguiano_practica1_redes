@@ -5,13 +5,19 @@
  *      Author: Omar_PC
  */
 
+#include "lwip/sys.h"
+#include "lwip/api.h"
+#include "tcpecho.h"
+#include "lwip/opt.h"
+
 #include <aes.h>
 #include "fsl_crc.h"
 #include "EIL.h"
-#include "pin_mux.h"
-#include "clock_config.h"
-#include "board.h"
+#include <stdio.h>
+#include <string.h>
 
+char tcpecho_app_data_print[512] = {0};
+char tcpecho_app_data[512] = {0};
 
 /*!
  * @brief Init for CRC-32.
@@ -84,4 +90,99 @@ AES_struct_data EIL_Decrypt(struct AES_ctx ctx,AES_struct_data Encrypted_msg)
 {
 	AES_CBC_decrypt_buffer(&ctx, Encrypted_msg.padded_data, Encrypted_msg.pad_len);
 	return Encrypted_msg;
+}
+
+err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
+{
+	struct netbuf *buf;
+	err_t err;
+	void *data;
+	u16_t len;
+	uint32_t chksum;
+	uint8_t crc_received[10];
+	uint8_t crc_calculated[10];
+	uint32_t crc_flag;
+
+	uint32_t crc_result;
+	uint8_t crc_send[10];
+
+
+	AES_struct_data data_recived;
+	AES_struct_data data_decrypted, data_encrypt;
+
+
+	while (1)
+	{
+		/*printf("Recved\n");*/
+		err = netconn_recv(conn, &buf);
+		do {
+			netbuf_data(buf, &data, &len);
+			/**Separates CRC from data data*/
+			memcpy(tcpecho_app_data_print, data, len);
+			tcpecho_app_data_print[len] = 0;
+			for(int i = 0; i <= 10; i++)
+			{
+				crc_received[i] = tcpecho_app_data_print[len - i];
+			}
+			for(int i = 0; i <= (len - 10 ); i++)
+			{
+				tcpecho_app_data[i] = tcpecho_app_data_print[i];
+			}
+			/**Check CRC*/
+			chksum = EIL_CRC32(tcpecho_app_data, strlen(tcpecho_app_data));
+            /**Convert crc to str*/
+            sprintf(crc_calculated, "%d", chksum);
+            /**Compare CRC*/
+            crc_flag = strcmp(crc_calculated,crc_received);
+            if(crc_flag != 0)
+            {
+            	PRINTF("ERROR CRC\r\n");
+            }
+
+			PRINTF("Data before decrypt: %s\r\n",tcpecho_app_data);
+			/**Decrypts*/
+			memcpy(data_recived.padded_data, tcpecho_app_data, strlen(tcpecho_app_data));
+			data_recived.pad_len = strlen(tcpecho_app_data);
+			data_recived.len = 0;
+			data_decrypted =  EIL_Decrypt(ctx,data_recived);
+			PRINTF("Data after decrypt: %s\r\n",data_decrypted.padded_data);
+			memcpy(data_buff,data_decrypted.padded_data,strlen(data_decrypted.padded_data));
+
+			netbuf_delete(buf);
+
+  	  } while (err == ERR_OK);
+
+	}
+	return err;
+}
+
+err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
+{
+	AES_struct_data data_encrypt;
+	uint32_t crc_result;
+	uint8_t crc_str[10];
+	uint32_t size1,size2;
+	err_t err;
+
+	data_encrypt = EIL_Encrypt(ctx, data_buff);
+	//tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
+
+	/**CRC*/
+	crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
+	PRINTF("CRC: %d\r\n",crc_result);
+
+	/**Conver crc to str*/
+	sprintf(crc_str, "%d", crc_result);
+	PRINTF("CRC string: %s\r\n",crc_str);
+
+	size1 = data_encrypt.pad_len;
+	size2 = strlen(crc_str);
+	for(int i = 0; i <= size2; i++)
+	{
+		data_encrypt.padded_data[(size1) + i] = crc_str[i+1];
+	}
+	PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
+
+	err = netconn_write(conn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
+	return err;
 }

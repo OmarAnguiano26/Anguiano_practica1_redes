@@ -59,16 +59,11 @@ tcpecho_thread(void *arg)
   err_t err;
   LWIP_UNUSED_ARG(arg);
   struct AES_ctx ctx;
-  AES_struct_data data_encrypt;
-  uint32_t crc_result;
-  AES_struct_data decrypt_data;
-  uint8_t crc_str[10];
-  void * data_send;
+  uint8_t data_response[] = "Hello Client!";
 
   /**Inits CRC and AES*/
   EIL_InitCrc32();
   ctx = EIL_AES_Init();
-
 
   /* Create a new connection identifier. */
   /* Bind connection to well known port number 7. */
@@ -84,120 +79,38 @@ tcpecho_thread(void *arg)
   /* Tell connection to go into listening mode. */
   netconn_listen(conn);
 
-  while (1) {
+  while (1)
+  {
 
-    /* Grab new connection. */
-    err = netconn_accept(conn, &newconn);
-    /*printf("accepted new connection %p\n", newconn);*/
-    /* Process the new connection. */
-    if (err == ERR_OK) {
-      struct netbuf *buf;
-      void *data;
-      u16_t len;
-      uint16_t size1,size2;
+	  /* Grab new connection. */
+	  err = netconn_accept(conn, &newconn);
+	  /*printf("accepted new connection %p\n", newconn);*/
+	  /* Process the new connection. */
+	  if (err == ERR_OK)
+	  {
+		  struct netbuf *buf;
+		  void *data;
+		  u16_t len;
+		  uint16_t size1,size2;
 
-      while ((err = netconn_recv(newconn, &buf)) == ERR_OK) {
-        /*printf("Recved\n");*/
-        do {
-             netbuf_data(buf, &data, &len);
-             /**Encrypts data*/
-             memcpy(tcpecho_app_data_print, data, len);
-             tcpecho_app_data_print[len] = 0;
-             PRINTF("Data before encrypt: %s1\r\n",tcpecho_app_data_print);
-             data_encrypt = EIL_Encrypt(ctx, tcpecho_app_data_print);
-             //tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
+		  while ((err = EIL_receive(newconn, ctx, tcpecho_app_data_print)) == ERR_OK)
+		  {
+    	  PRINTF("Received: %s\r\n", tcpecho_app_data_print);
+		  }
 
-             /**CRC*/
-             crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
-             PRINTF("CRC: %d\r\n",crc_result);
-
-             /**Conver crc to str*/
-             sprintf(crc_str, "%d", crc_result);
-             PRINTF("CRC string: %s\r\n",crc_str);
-
-             size1 = data_encrypt.pad_len;
-             size2 = strlen(crc_str);
-             for(int i = 0; i <= size2; i++)
-             {
-            	 data_encrypt.padded_data[(size1) + i] = crc_str[i+1];
-             }
-             PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
-
-
-             err = netconn_write(newconn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
-#if 0
-            if (err != ERR_OK) {
-              printf("tcpecho: netconn_write: error \"%s\"\n", lwip_strerr(err));
-            }
-#endif
-        } while (netbuf_next(buf) >= 0);
-        netbuf_delete(buf);
+		  err = EIL_send(newconn, ctx, data_response);
+		  if(err =! ERR_OK)
+		  {
+			  PRINTF("Error in writing\r\n");
+		  }
       }
       /*printf("Got EOF, looping\n");*/
       /* Close connection and discard connection identifier. */
       netconn_close(newconn);
       netconn_delete(newconn);
-    }
-  }
+   }
 }
 
-static void
-tcpecho_thread_client(void *arg)
-{
-
-	  struct netconn *conn, *newconn;
-	  err_t err,com_err;
-	  LWIP_UNUSED_ARG(arg);
-
-	  while(1)
-	  {
-		  conn = netconn_new(NETCONN_TCP);
-		  /**Connect to server*/
-		  IP4_ADDR(&server_ip_address, configSERVER_ADDR0, configSERVER_ADDR1, configSERVER_ADDR2, configSERVER_ADDR3);
-		  /**Delay to connect the server*/
-		  PRINTF("Start Server\n");
-		  vTaskDelay(5000);
-		  err = netconn_connect(conn, &server_ip_address,7);
-		  /**Successfully connected to server*/
-		  if(err == ERR_OK)
-		  {
-			  /**Start writing*/
-			  struct netbuf *buf;
-			  void *data;
-			  u16_t len;
-
-			  data = (void*)"Hello Server";
-			  len = strlen((const char*)data);
-			  com_err = netconn_write(conn, data, len, NETCONN_COPY);
-			  if (com_err != ERR_OK)
-			  {
-				  PRINTF("tcp_app: Error in write \n");
-			  }
-			  /**Start receiving from server*/
-			  com_err = netconn_recv(conn, &buf);
-			  if(com_err == ERR_OK)
-			  {
-				  PRINTF("Received from Server:");
-				  do
-				  {
-					  netbuf_data(buf, &data, &len);
-					  /**Copy received data to a string so it can be printed on console*/
-					  memcpy(tcpecho_app_data_print, data, len);
-					  PRINTF("%s\r\n", tcpecho_app_data_print);
-				  }
-				  while(netbuf_next(buf) >= 0);
-				  netbuf_delete(buf);
-			  }
-			  else
-			  {
-				  PRINTF("Error in receivig\n");
-			  }
-			  netconn_delete(conn);
-			  PRINTF("Connection closed\n");
-
-		  }
-	}
-}
 
 /*-----------------------------------------------------------------------------------*/
 void
