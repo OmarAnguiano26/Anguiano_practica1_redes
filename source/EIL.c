@@ -111,8 +111,8 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 	AES_struct_data data_decrypted, data_encrypt;
 
 
-	while (1)
-	{
+	//while (1)
+	//{
 		/*printf("Recved\n");*/
 		err = netconn_recv(conn, &buf);
 		do {
@@ -152,7 +152,7 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 
   	  } while (err == ERR_OK);
 
-	}
+	//}
 	return err;
 }
 

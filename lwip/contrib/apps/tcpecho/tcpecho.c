@@ -72,7 +72,7 @@ tcpecho_thread(void *arg)
   netconn_bind(conn, IP6_ADDR_ANY, 7);
 #else /* LWIP_IPV6 */
   conn = netconn_new(NETCONN_TCP);
-  netconn_bind(conn, IP_ADDR_ANY, 7);
+  netconn_bind(conn, IP_ADDR_ANY, 1000);
 #endif /* LWIP_IPV6 */
   LWIP_ERROR("tcpecho: invalid conn", (conn != NULL), return;);
 
