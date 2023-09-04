@@ -61,7 +61,7 @@ struct AES_ctx EIL_AES_Init()
 AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 {
 	size_t string_len, padded_len;
-	uint8_t padded_msg[512] = {0};
+	uint8_t padded_msg[256] = {0};
 	AES_struct_data AES_data;
 
 	/* To encrypt an array its length must be a multiple of 16 so we add zeros */
@@ -72,8 +72,8 @@ AES_struct_data EIL_Encrypt(struct AES_ctx ctx, uint8_t *data)
 
 	AES_CBC_encrypt_buffer(&ctx, padded_msg, padded_len);
 	/**Copies encrypted data and size to the EIL struct*/
-	AES_data.padded_data = padded_msg;
-	//memcpy(AES_data.padded_data,padded_msg,padded_len);
+	//AES_data.padded_data = padded_msg;
+	memcpy(AES_data.padded_data,padded_msg,padded_len);
 	AES_data.len = string_len;
 	AES_data.pad_len = padded_len;
 

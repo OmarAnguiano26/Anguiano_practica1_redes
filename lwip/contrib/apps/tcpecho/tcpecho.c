@@ -62,7 +62,7 @@ tcpecho_thread(void *arg)
   AES_struct_data data_encrypt;
   uint32_t crc_result;
   AES_struct_data decrypt_data;
-  uint8_t crc_str[9];
+  uint8_t crc_str[10];
   void * data_send;
 
   /**Inits CRC and AES*/
@@ -105,14 +105,23 @@ tcpecho_thread(void *arg)
              tcpecho_app_data_print[len] = 0;
              PRINTF("Data before encrypt: %s1\r\n",tcpecho_app_data_print);
              data_encrypt = EIL_Encrypt(ctx, tcpecho_app_data_print);
-             tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
-             PRINTF("Data after encrypt: %s1\r\n",data_encrypt.padded_data);
-             PRINTF("Data after encrypt: %s 2\r\n",tcpecho_app_data_print);
+             //tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
 
              /**CRC*/
              crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
+             PRINTF("CRC: %d\r\n",crc_result);
+
              /**Conver crc to str*/
              sprintf(crc_str, "%d", crc_result);
+             PRINTF("CRC string: %s\r\n",crc_str);
+
+             size1 = data_encrypt.pad_len;
+             size2 = strlen(crc_str);
+             for(int i = 0; i <= size2; i++)
+             {
+            	 data_encrypt.padded_data[(size1) + i] = crc_str[i+1];
+             }
+             PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
 
 
              err = netconn_write(newconn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
