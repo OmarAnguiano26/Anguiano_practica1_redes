@@ -115,7 +115,7 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 	//{
 		/*printf("Recved\n");*/
 		err = netconn_recv(conn, &buf);
-		do {
+		//do {
 			netbuf_data(buf, &data, &len);
 			/**Separates CRC from data data*/
 			memcpy(tcpecho_app_data_print, data, len);
@@ -150,7 +150,7 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 
 			netbuf_delete(buf);
 
-  	  } while (err == ERR_OK);
+  	 // } while (err == ERR_OK);
 
 	//}
 	return err;
@@ -184,5 +184,6 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 	PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
 
 	err = netconn_write(conn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
+
 	return err;
 }

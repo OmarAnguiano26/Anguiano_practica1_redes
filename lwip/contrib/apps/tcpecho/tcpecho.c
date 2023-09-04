@@ -96,13 +96,18 @@ tcpecho_thread(void *arg)
 		  while ((err = EIL_receive(newconn, ctx, tcpecho_app_data_print)) == ERR_OK)
 		  {
     	  PRINTF("Received: %s\r\n", tcpecho_app_data_print);
-		  }
-
 		  err = EIL_send(newconn, ctx, data_response);
 		  if(err =! ERR_OK)
 		  {
 			  PRINTF("Error in writing\r\n");
 		  }
+		  }
+
+//		  err = EIL_send(newconn, ctx, data_response);
+//		  if(err =! ERR_OK)
+//		  {
+//			  PRINTF("Error in writing\r\n");
+//		  }
       }
       /*printf("Got EOF, looping\n");*/
       /* Close connection and discard connection identifier. */
