@@ -81,7 +81,6 @@ tcpecho_thread(void *arg)
 
   while (1)
   {
-
 	  /* Grab new connection. */
 	  err = netconn_accept(conn, &newconn);
 	  /*printf("accepted new connection %p\n", newconn);*/
@@ -95,7 +94,7 @@ tcpecho_thread(void *arg)
 
 		  while ((err = EIL_receive(newconn, ctx, tcpecho_app_data_print)) == ERR_OK)
 		  {
-    	  PRINTF("Received: %s\r\n", tcpecho_app_data_print);
+    	  //PRINTF("Received: %s\r\n", tcpecho_app_data_print);
 		  err = EIL_send(newconn, ctx, data_response);
 		  if(err =! ERR_OK)
 		  {

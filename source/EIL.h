@@ -10,7 +10,7 @@
 
 typedef struct
 {
-	uint8_t padded_data[512]; /**Data to encrypt*/
+	uint8_t padded_data[256]; /**Data to encrypt*/
 	uint32_t len; /**length of the original data BEFORE padding*/
 	uint32_t pad_len; /**length of data AFTER padding*/
 	/**TODO Length diff will be used to eliminate padding*/

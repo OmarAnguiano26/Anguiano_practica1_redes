@@ -15,9 +15,11 @@
 #include "EIL.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>     /* atoi */
 
-char tcpecho_app_data_print[512] = {0};
-char tcpecho_app_data[512] = {0};
+
+char tcpecho_app_data_print[256] = {0};
+char tcpecho_app_data[256] = {0};
 
 /*!
  * @brief Init for CRC-32.
@@ -109,7 +111,7 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 
 	AES_struct_data data_recived;
 	AES_struct_data data_decrypted, data_encrypt;
-
+	PRINTF("Start of receive\r\n");
 
 	//while (1)
 	//{
@@ -120,11 +122,14 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 			/**Separates CRC from data data*/
 			memcpy(tcpecho_app_data_print, data, len);
 			tcpecho_app_data_print[len] = 0;
-			for(int i = 0; i <= 10; i++)
+			for(int i = 0; i <= 4; i++)
 			{
 				crc_received[i] = tcpecho_app_data_print[len - i];
 			}
-			for(int i = 0; i <= (len - 10 ); i++)
+			uint32_t crc_compare = atoi(crc_received);
+			memcpy(crc_received,(uint8_t *)tcpecho_app_data_print[len-4],4);
+			/***Only preserves the encrypted data*/
+			for(int i = 0; i <= (len - 4); i++)
 			{
 				tcpecho_app_data[i] = tcpecho_app_data_print[i];
 			}
@@ -134,7 +139,9 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
             sprintf(crc_calculated, "%d", chksum);
             /**Compare CRC*/
             crc_flag = strcmp(crc_calculated,crc_received);
-            if(crc_flag != 0)
+			//uint32_t crc_compare = (uint32_t)&crc_received;
+			PRINTF("CRC received = %d\r\n",crc_compare);
+            if(crc_compare != chksum)
             {
             	PRINTF("ERROR CRC\r\n");
             }
