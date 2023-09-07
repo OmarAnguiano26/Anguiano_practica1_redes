@@ -100,9 +100,8 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 	err_t err;
 	void *data;
 	u16_t len;
-	uint32_t chksum;
-	uint8_t crc_received[10];
-	uint8_t crc_calculated[10];
+	uint32_t chksum, ucrc_received;
+	uint8_t scrc_received[10];
 	uint32_t crc_flag;
 
 	uint32_t crc_result;
@@ -121,41 +120,40 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 			netbuf_data(buf, &data, &len);
 			/**Separates CRC from data data*/
 			memcpy(tcpecho_app_data_print, data, len);
-			tcpecho_app_data_print[len] = 0;
+			netbuf_delete(buf); /**Deletes data*/
+
+			/**Splits CRC on another string*/
 			for(int i = 0; i <= 4; i++)
 			{
-				crc_received[i] = tcpecho_app_data_print[len - i];
+				scrc_received[i] = tcpecho_app_data_print[len - i];
 			}
-			uint32_t crc_compare = atoi(crc_received);
-			memcpy(crc_received,(uint8_t *)tcpecho_app_data_print[len-4],4);
 			/***Only preserves the encrypted data*/
 			for(int i = 0; i <= (len - 4); i++)
 			{
 				tcpecho_app_data[i] = tcpecho_app_data_print[i];
 			}
-			/**Check CRC*/
+			/**Calculates CRC*/
 			chksum = EIL_CRC32(tcpecho_app_data, strlen(tcpecho_app_data));
-            /**Convert crc to str*/
-            sprintf(crc_calculated, "%d", chksum);
+
+			/**Converts the crc string to uint*/
+			for (int i = 0; scrc_received != '\0'; i++)
+			{
+				ucrc_received = ucrc_received * 10 + (scrc_received[i]);
+			}			
+
             /**Compare CRC*/
-            crc_flag = strcmp(crc_calculated,crc_received);
-			//uint32_t crc_compare = (uint32_t)&crc_received;
-			PRINTF("CRC received = %d\r\n",crc_compare);
-            if(crc_compare != chksum)
+			PRINTF("CRC received = %d\r\n",ucrc_received);
+            if(ucrc_received != chksum)
             {
             	PRINTF("ERROR CRC\r\n");
             }
 
-			PRINTF("Data before decrypt: %s\r\n",tcpecho_app_data);
 			/**Decrypts*/
 			memcpy(data_recived.padded_data, tcpecho_app_data, strlen(tcpecho_app_data));
 			data_recived.pad_len = strlen(tcpecho_app_data);
-			data_recived.len = 0;
 			data_decrypted =  EIL_Decrypt(ctx,data_recived);
 			PRINTF("Data after decrypt: %s\r\n",data_decrypted.padded_data);
 			memcpy(data_buff,data_decrypted.padded_data,strlen(data_decrypted.padded_data));
-
-			netbuf_delete(buf);
 
   	 // } while (err == ERR_OK);
 
