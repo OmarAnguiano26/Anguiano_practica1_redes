@@ -167,27 +167,20 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 {
 	AES_struct_data data_encrypt;
 	uint32_t crc_result;
-	uint8_t crc_str[10];
-	uint32_t size1,size2;
+	uint8_t *crc_str;
+	uint32_t size;
 	err_t err;
 
 	data_encrypt = EIL_Encrypt(ctx, data_buff);
-	//tcpecho_app_data_print[0] = (uint8_t*)data_encrypt.padded_data;
 
 	/**CRC*/
 	crc_result = EIL_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
 	PRINTF("CRC: %d\r\n",crc_result);
 
-	/**Conver crc to str*/
-	sprintf(crc_str, "%d", crc_result);
-	PRINTF("CRC string: %s\r\n",crc_str);
+	/***Attach CRC to data*/
+	crc_str = (char *)&crc_result; /**Converts int to string so it can be sent over TCP*/
+	data_encrypt.padded_data[data_encrypt.pad_len] = *crc_str; /**Concats CRC string to the data before sending*/
 
-	size1 = data_encrypt.pad_len;
-	size2 = strlen(crc_str);
-	for(int i = 0; i <= size2; i++)
-	{
-		data_encrypt.padded_data[(size1) + i] = crc_str[i+1];
-	}
 	PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
 
 	err = netconn_write(conn, data_encrypt.padded_data, strlen(data_encrypt.padded_data), NETCONN_COPY);
