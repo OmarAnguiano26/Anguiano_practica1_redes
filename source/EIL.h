@@ -56,7 +56,7 @@ AES_struct_data EIL_Decrypt(struct AES_ctx ctx,AES_struct_data Encrypted_msg);
 
 err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff);
 
-err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff);
+err_t EIL_send(struct netconn *conn, struct AES_ctx ctx);
 
 
 

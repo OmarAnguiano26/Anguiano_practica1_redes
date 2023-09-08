@@ -59,7 +59,7 @@ tcpecho_thread(void *arg)
   err_t err;
   LWIP_UNUSED_ARG(arg);
   struct AES_ctx ctx;
-  uint8_t data_response[] = "Hello Client!";
+
 
   /**Inits CRC and AES*/
   EIL_InitCrc32();
@@ -104,12 +104,17 @@ tcpecho_thread(void *arg)
 			  break;
 		  }
 
-		  err = EIL_send(newconn, ctx, data_response);
-		  if(err =! ERR_OK)
-		  {
-			  PRINTF("Error in writing\r\n");
-		  }
+//		  err = EIL_send(newconn, ctx);
+//		  if(err =! ERR_OK)
+//		  {
+//			  PRINTF("Error in writing\r\n");
+//		  }
       }
+	  err = EIL_send(newconn, ctx);
+	  if(err =! ERR_OK)
+	  {
+		  PRINTF("Error in writing\r\n");
+	  }
       /*printf("Got EOF, looping\n");*/
       /* Close connection and discard connection identifier. */
       netconn_close(newconn);
