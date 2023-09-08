@@ -254,7 +254,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
  * sys_thread_new() when the thread is created.
  */
 #ifndef DEFAULT_THREAD_STACKSIZE
-#define DEFAULT_THREAD_STACKSIZE 3200
+#define DEFAULT_THREAD_STACKSIZE 3500
 #endif
 
 /**
