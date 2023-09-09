@@ -83,15 +83,10 @@ tcpecho_thread(void *arg)
   {
 	  /* Grab new connection. */
 	  err = netconn_accept(conn, &newconn);
-	  /*printf("accepted new connection %p\n", newconn);*/
+	  //PRINTF("accepted new connection %p\n", newconn);
 	  /* Process the new connection. */
 	  if (err == ERR_OK)
 	  {
-		  struct netbuf *buf;
-		  void *data;
-		  u16_t len;
-		  uint16_t size1,size2;
-
 		  while (err == ERR_OK)
 		  {
 			  err = EIL_receive(newconn, ctx, tcpecho_app_data_print);
@@ -99,7 +94,7 @@ tcpecho_thread(void *arg)
 		  }
 
       }
-	  err = EIL_send(newconn, ctx,tcpecho_app_data_print);
+	  err = EIL_send(newconn, ctx, tcpecho_app_data_print);
 	  if(err != ERR_OK)
 	  {
 		  PRINTF("Error in writing\r\n");
