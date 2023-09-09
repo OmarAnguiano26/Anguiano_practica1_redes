@@ -78,7 +78,7 @@ err_t EIL_receive(struct netconn *conn, struct AES_ctx ctx, uint8_t *data_buff)
 			memcpy(&ucrc_received, scrc_received,CRC_LENGTH);
 
             /**Compares CRC received from the calculated with data*/
-			PRINTF("CRC received = %d\r\n",ucrc_received);
+			PRINTF("CRC received = %u\r\n",ucrc_received);
             if(ucrc_received == chksum)
             {
             	PRINTF("CRC Correct\r\n");
@@ -114,7 +114,7 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data)
 
 	/** Calculates CRC*/
 	crc_result = myssn_CRC32(data_encrypt.padded_data, data_encrypt.pad_len);
-	PRINTF("CRC: %d\r\n",crc_result);
+	PRINTF("CRC: %u\r\n",crc_result);
 
 	/**Converts int to string so it can be sent over TCP*/
 	crc_str = (char *)&crc_result;
@@ -124,7 +124,6 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx, uint8_t *data)
 		data_encrypt.padded_data[(data_encrypt.pad_len + i)] = crc_str[i];
 	}
 
-	PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
 	err = netconn_write(conn, data_encrypt.padded_data, (data_encrypt.pad_len + CRC_LENGTH), NETCONN_COPY);
 
 	return err;
