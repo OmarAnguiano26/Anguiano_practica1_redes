@@ -170,7 +170,9 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx)
 	uint32_t size;
 	err_t err;
 	uint32_t len;
-	uint8_t data_response[30] = "Hello Client!";
+	uint8_t data_response[30] = "Hola Mundo";
+
+	EIL_InitCrc32(); /**Call again to clean crc*/
 
 	data_encrypt = EIL_Encrypt(ctx, data_response);
 
@@ -182,14 +184,20 @@ err_t EIL_send(struct netconn *conn, struct AES_ctx ctx)
 	crc_str = (char *)&crc_result; /**Converts int to string so it can be sent over TCP*/
 	for(int i = 0; i < 4; i++)
 	{
-		data_encrypt.padded_data[(data_encrypt.pad_len)] = crc_str[i];
+		data_encrypt.padded_data[(data_encrypt.pad_len + i)] = crc_str[i];
 	}
 	//data_encrypt.padded_data[data_encrypt.pad_len] = *crc_str; /**Concats CRC string to the data before sending*/
 
 	PRINTF("Data after encrypt: %s\r\n",data_encrypt.padded_data);
 	len = strlen(data_encrypt.padded_data);
-
-	err = netconn_write(conn, data_encrypt.padded_data, len, NETCONN_COPY);
+	uint8_t *data;
+//	uint8_t data[30] = {0};
+//	for(int i = 0; i < len; i++)
+//	{
+//		data[i] = data_encrypt.padded_data[i];
+//	}
+	//memcpy(data,data_encrypt.padded_data,len);
+	err = netconn_write(conn, data_encrypt.padded_data, (data_encrypt.pad_len + 4), NETCONN_COPY);
 
 	return err;
 }
