@@ -128,58 +128,6 @@ static phy_handle_t phyHandle   = {.phyAddr = EXAMPLE_PHY_ADDRESS, .mdioHandle =
  ******************************************************************************/
 
 /*!
- * @brief Init for CRC-32.
- * @details Init CRC peripheral module for CRC-32 protocol.
- *          width=32 poly=0x04c11db7 init=0xffffffff refin=true refout=true xorout=0xffffffff check=0xcbf43926
- *          name="CRC-32"
- *          http://reveng.sourceforge.net/crc-catalogue/
- */
-static void InitCrc32(CRC_Type *base, uint32_t seed)
-{
-    crc_config_t config;
-
-    config.polynomial         = 0x04C11DB7U;
-    config.seed               = seed;
-    config.reflectIn          = true;
-    config.reflectOut         = true;
-    config.complementChecksum = true;
-    config.crcBits            = kCrcBits32;
-    config.crcResult          = kCrcFinalChecksum;
-
-    CRC_Init(base, &config);
-}
-/**Test task for functions*/
-void aescrc_test_task(void *arg)
-{
-	struct AES_ctx ctx;
-	AES_struct_data data;
-	uint32_t crc_result;
-	AES_struct_data decrypt_data;
-	uint8_t crc_str[] = {};
-
-	uint8_t test_string[] = {"Hello World"};
-	EIL_InitCrc32();
-	ctx = EIL_AES_Init();
-	/*Encrypt*/
-	data = EIL_Encrypt(ctx, test_string);
-
-	crc_result = EIL_CRC32(data.padded_data, data.pad_len);
-	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
-
-	/**Test decrypt*/
-	decrypt_data =  EIL_Decrypt(ctx, data);
-	PRINTF("Decrypted Message: %s\r\n", decrypt_data.padded_data);
-	crc_result = EIL_CRC32(decrypt_data.padded_data, decrypt_data.pad_len);
-	PRINTF("\r\nCRC-32: 0x%08x\r\n", crc_result);
-	PRINTF("\r\nCRC-32 decimal: %d\r\n",crc_result);
-
-	/**Conver crc to str*/
-	sprintf(crc_str, "%d", crc_result);
-	PRINTF("CRC string:: %s\r\n", &crc_str[2]);
-
-}
-
-/*!
  * @brief Initializes lwIP stack.
  *
  * @param arg unused

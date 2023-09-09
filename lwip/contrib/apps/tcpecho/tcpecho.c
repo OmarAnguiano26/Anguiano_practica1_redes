@@ -62,8 +62,8 @@ tcpecho_thread(void *arg)
 
 
   /**Inits CRC and AES*/
-  EIL_InitCrc32();
-  ctx = EIL_AES_Init();
+  EIL_InitCRC32();
+  ctx = EIL_Init_AES();
 
   /* Create a new connection identifier. */
   /* Bind connection to well known port number 7. */
@@ -95,23 +95,12 @@ tcpecho_thread(void *arg)
 		  while (err == ERR_OK)
 		  {
 			  err = EIL_receive(newconn, ctx, tcpecho_app_data_print);
-			  //PRINTF("Received: %s\r\n", tcpecho_app_data_print);
-			 // err = EIL_send(newconn, ctx, data_response);
-			  //if(err =! ERR_OK)
-			  //{
-				//  PRINTF("Error in writing\r\n");
-			  //}
 			  break;
 		  }
 
-//		  err = EIL_send(newconn, ctx);
-//		  if(err =! ERR_OK)
-//		  {
-//			  PRINTF("Error in writing\r\n");
-//		  }
       }
-	  err = EIL_send(newconn, ctx);
-	  if(err =! ERR_OK)
+	  err = EIL_send(newconn, ctx,tcpecho_app_data_print);
+	  if(err != ERR_OK)
 	  {
 		  PRINTF("Error in writing\r\n");
 	  }
